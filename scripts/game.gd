@@ -68,6 +68,7 @@ func _build_world() -> void:
         if i == 6:
             _checkpoint(Vector3(x, 1.0, z))
     _platform(Vector3(0, 0, -42), Vector3(12, 1, 10), Color(0.0, 0.3, 0.24))
+    _build_city()
 
 func _platform(pos: Vector3, size: Vector3, color: Color) -> StaticBody3D:
     var body := StaticBody3D.new()
@@ -143,3 +144,52 @@ func _touch_button(layer: CanvasLayer, action: String, pos: Vector2, caption: St
     label.add_theme_color_override("font_color", Color(0.35, 0.95, 1.0))
     label.mouse_filter = Control.MOUSE_FILTER_IGNORE
     layer.add_child(label)
+
+func _build_city() -> void:
+    # Lightweight procedural skyline: simple meshes, shared materials, no collision.
+    var building_material := StandardMaterial3D.new()
+    building_material.albedo_color = Color(0.025, 0.035, 0.09)
+    building_material.metallic = 0.35
+    building_material.roughness = 0.72
+
+    var cyan_material := StandardMaterial3D.new()
+    cyan_material.albedo_color = Color(0.0, 0.65, 0.9)
+    cyan_material.emission_enabled = true
+    cyan_material.emission = Color(0.0, 0.55, 1.0)
+    cyan_material.emission_energy_multiplier = 1.4
+
+    var violet_material := StandardMaterial3D.new()
+    violet_material.albedo_color = Color(0.48, 0.12, 0.85)
+    violet_material.emission_enabled = true
+    violet_material.emission = Color(0.38, 0.05, 0.9)
+    violet_material.emission_energy_multiplier = 1.2
+
+    for side in [-1.0, 1.0]:
+        for i in range(14):
+            var height := 7.0 + float((i * 7 + int(side)) % 6) * 2.1
+            var depth := 3.0
+            var width := 3.2 + float(i % 2) * 0.8
+            var z := 5.0 - float(i) * 3.7
+            var x := side * (7.5 + float(i % 3) * 1.15)
+
+            var building := MeshInstance3D.new()
+            var block := BoxMesh.new()
+            block.size = Vector3(width, height, depth)
+            building.mesh = block
+            building.position = Vector3(x, height * 0.5 - 0.15, z)
+            building.material_override = building_material
+            add_child(building)
+
+            # A few emissive facade bands create the neon-city look cheaply.
+            for band in range(1, int(height / 2.4)):
+                var strip := MeshInstance3D.new()
+                var strip_mesh := BoxMesh.new()
+                strip_mesh.size = Vector3(width * 0.78, 0.055, 0.045)
+                strip.mesh = strip_mesh
+                strip.position = Vector3(
+                    x,
+                    float(band) * 2.4,
+                    z + (depth * 0.5 + 0.03) * (-side)
+                )
+                strip.material_override = cyan_material if (i + band) % 2 == 0 else violet_material
+                add_child(strip)
