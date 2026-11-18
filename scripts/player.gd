@@ -46,7 +46,7 @@ func _build_player() -> void:
     add_child(camera_pivot)
     camera = Camera3D.new()
     camera.position = Vector3(0, 0.8, 7.0)
-    camera.look_at_from_position(camera.position, Vector3.ZERO)
+    camera.look_at(Vector3(0, 0, -4))
     camera.current = true
     camera_pivot.add_child(camera)
 
@@ -56,10 +56,9 @@ func _physics_process(delta: float) -> void:
     else:
         jumps_left = 2
 
-    if Input.is_action_just_pressed("jump"):
-        if is_on_floor() or jumps_left > 0:
-            velocity.y = jump_velocity
-            jumps_left -= 1
+    if Input.is_action_just_pressed("jump") and (is_on_floor() or jumps_left > 0):
+        velocity.y = jump_velocity
+        jumps_left -= 1
 
     if Input.is_action_just_pressed("slide") and is_on_floor():
         sliding = true
@@ -73,8 +72,7 @@ func _physics_process(delta: float) -> void:
     var speed := sprint_speed if Input.is_action_pressed("sprint") else move_speed
     if sliding:
         speed *= 1.35
-    var direction := Vector3(axis.x, 0, axis.y)
-    direction = direction.normalized()
+    var direction := Vector3(axis.x, 0.0, axis.y).normalized()
     velocity.x = move_toward(velocity.x, direction.x * speed, 28.0 * delta)
     velocity.z = move_toward(velocity.z, direction.z * speed, 28.0 * delta)
     move_and_slide()
