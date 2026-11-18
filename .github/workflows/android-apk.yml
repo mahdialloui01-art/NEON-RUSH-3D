@@ -52,13 +52,22 @@ jobs:
           export/android/java_sdk_path = "$JAVA_HOME"
           EOF
 
-      - name: Import project
-        run: godot --headless --editor --path . --quit
+      - name: Diagnose Android export configuration
+        run: |
+          echo "=== Godot editor settings ==="
+          cat "$HOME/.config/godot/editor_settings-4.tres"
+          echo "=== Android SDK components ==="
+          ls -la "$ANDROID_HOME/platform-tools" "$ANDROID_HOME/platforms/android-34" "$ANDROID_HOME/build-tools/34.0.0"
+          echo "=== Godot export templates ==="
+          ls -la "$HOME/.local/share/godot/export_templates/4.3.stable/"
+          echo "=== Import project with verbose diagnostics ==="
+          godot --headless --editor --path . --quit --verbose 2>&1 | tee import.log
 
       - name: Export APK
         run: |
           mkdir -p build
-          godot --headless --path . --export-debug "Android" build/NEON_RUSH_3D.apk
+          set -o pipefail
+          godot --headless --path . --export-debug "Android" build/NEON_RUSH_3D.apk --verbose 2>&1 | tee export.log
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
