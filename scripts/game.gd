@@ -16,17 +16,15 @@ func _process(delta: float) -> void:
     if finished:
         return
     elapsed += delta
-    for i in platforms.size():
+    for i in range(platforms.size()):
         var p := platforms[i]
         if p.has_meta("moving"):
             p.position.x = float(p.get_meta("base_x")) + sin(elapsed * 1.5 + i) * 2.0
     if player.global_position.z < -38.0:
         finished = true
         hud.text = "RUN COMPLETE!   TIME %.2f s" % elapsed
-    elif player.global_position.y < -10.0:
-        hud.text = "CHECKPOINT  •  %.1f s" % elapsed
     else:
-        hud.text = "NEON RUSH 3D     TIME %.1f s     DOUBLE JUMP: ON" % elapsed
+        hud.text = "NEON RUSH 3D     TIME %.1f s" % elapsed
 
 func _setup_input() -> void:
     _key_action("move_left", KEY_A)
@@ -70,11 +68,6 @@ func _build_world() -> void:
         if i == 6:
             _checkpoint(Vector3(x, 1.0, z))
     _platform(Vector3(0, 0, -42), Vector3(12, 1, 10), Color(0.0, 0.3, 0.24))
-
-    for i in range(0, 8):
-        var beam := _platform(Vector3(sin(float(i)) * 1.8, 1.1, -8.0 - i * 5.0), Vector3(0.18, 0.18, 2.2), Color(1.0, 0.08, 0.28))
-        beam.rotation_degrees.z = 0
-        beam.name = "NeonHazard"
 
 func _platform(pos: Vector3, size: Vector3, color: Color) -> StaticBody3D:
     var body := StaticBody3D.new()
@@ -122,3 +115,31 @@ func _build_hud() -> void:
     hud.add_theme_color_override("font_color", Color(0.2, 0.95, 1.0))
     layer.add_child(hud)
     hud.text = "NEON RUSH 3D"
+    _build_touch_controls(layer)
+
+func _build_touch_controls(layer: CanvasLayer) -> void:
+    var size := get_viewport().get_visible_rect().size
+    _touch_button(layer, "move_left", Vector2(76, size.y - 105), "◀")
+    _touch_button(layer, "move_right", Vector2(184, size.y - 105), "▶")
+    _touch_button(layer, "move_forward", Vector2(130, size.y - 164), "▲")
+    _touch_button(layer, "move_back", Vector2(130, size.y - 48), "▼")
+    _touch_button(layer, "jump", Vector2(size.x - 165, size.y - 145), "JUMP")
+    _touch_button(layer, "sprint", Vector2(size.x - 70, size.y - 78), "RUN")
+    _touch_button(layer, "slide", Vector2(size.x - 260, size.y - 65), "SLIDE")
+
+func _touch_button(layer: CanvasLayer, action: String, pos: Vector2, caption: String) -> void:
+    var button := TouchScreenButton.new()
+    button.action = action
+    button.position = pos
+    var hit := CircleShape2D.new()
+    hit.radius = 38.0
+    button.shape = hit
+    layer.add_child(button)
+
+    var label := Label.new()
+    label.text = caption
+    label.position = pos - Vector2(42, 16)
+    label.add_theme_font_size_override("font_size", 18 if caption.length() < 4 else 13)
+    label.add_theme_color_override("font_color", Color(0.35, 0.95, 1.0))
+    label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+    layer.add_child(label)
